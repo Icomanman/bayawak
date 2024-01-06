@@ -1,0 +1,10 @@
+
+/.vscode
+
+/build
+/node_modules
+/tmp
+
+*.env
+*.tmp.*
+package-lock.json
