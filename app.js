@@ -15,7 +15,8 @@ const { DEV_ADDRESS, NETWORK, SEED } = useEnv(false);
 const walletProvider = new HDWalletProvider(SEED, NETWORK);
 const web3 = new Web3(walletProvider);
 
-const contractAddress = '0xa2327a938Febf5FEC13baCFb16Ae10EcBc4cbDCF'; // USDC Implementation Mainnet
+// const contractAddress = '0x43506849D7C04F9138D1A2050bbF3A0c054402dd'; // USDC Implementation Mainnet
+const contractAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // USDC Token Mainnet
 const contractABI = require(`${build_path}/USDC.json`);;
 
 const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
@@ -34,15 +35,27 @@ const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
     }
 
     if (connected) {
+        let received = false;
         try {
-            console.log(connected);
-            // const subscription = await wss.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
-            //     if (error) {
-            //         console.error('Error:', error);
-            //     } else {
-            //         console.log('New Block Header:', blockHeader);
-            //     }
-            // });
+            const USDC = new wss.eth.Contract(contractABI.abi, contractAddress);
+            USDC.events.Transfer({}, (err, result) => {
+                if (err) throw new Error(err.message);
+                received = true;
+                console.log('> Incoming...');
+                console.log(result);
+            });
+
+            console.log('> Listening to ' + contractAddress);
+            let i = 0;
+            while (!received || i < 120) {
+                await new Promise(resolve =>
+                    setTimeout(() => {
+                        console.log(i);
+                        i += 1;
+                        resolve();
+                    }, 1000)
+                );
+            }
         } catch (err) {
             console.log('> ERR');
             console.error(err.message);
@@ -50,7 +63,6 @@ const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
         };
     }
 
-    // process.exit();
     process.on('SIGINT', () => wss.currentProvider.disconnect());
 })();
 
