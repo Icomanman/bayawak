@@ -11,15 +11,12 @@ const useEnv = require('./helpers/env.js');
 const initSocket = require('./utils/initSocket.js')
 
 const app = express();
-const { DEV_ADDRESS, NETWORK, SEED } = useEnv(false);
+const { DEV_ADDRESS, NETWORK, SEED, USDC_TOKEN } = useEnv(false);
 const walletProvider = new HDWalletProvider(SEED, NETWORK);
 const web3 = new Web3(walletProvider);
 
-// const contractAddress = '0x43506849D7C04F9138D1A2050bbF3A0c054402dd'; // USDC Implementation Mainnet
-const contractAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // USDC Token Mainnet
-const contractABI = require(`${build_path}/USDC.json`);;
-
-const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
+const contractAddress = USDC_TOKEN; // (Proxy Contract)
+const contractABI = require(`${build_path}/USDC.json`); // Implementation ABI (Implementation Contract)
 
 // Start listening for events
 (async function startEventListening() {
@@ -35,27 +32,19 @@ const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
     }
 
     if (connected) {
-        let received = false;
         try {
             const USDC = new wss.eth.Contract(contractABI.abi, contractAddress);
-            USDC.events.Transfer({}, (err, result) => {
-                if (err) throw new Error(err.message);
-                received = true;
-                console.log('> Incoming...');
-                console.log(result);
+            const transfer = USDC.events.Transfer({});
+            console.log(USDC.events);
+
+            transfer.on('data', data => {
+                console.log(data);
+                process.exit(0);
             });
 
+            transfer.on('error', err => { throw new Error(err.message) });
+
             console.log('> Listening to ' + contractAddress);
-            let i = 0;
-            while (!received || i < 120) {
-                await new Promise(resolve =>
-                    setTimeout(() => {
-                        console.log(i);
-                        i += 1;
-                        resolve();
-                    }, 1000)
-                );
-            }
         } catch (err) {
             console.log('> ERR');
             console.error(err.message);

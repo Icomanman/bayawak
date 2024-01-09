@@ -7,6 +7,7 @@ module.exports = function (is_dev = true) {
         API_SECRET: process.env.ETH_MATIC_SECRET,
         DEV_ADDRESS: process.env.DEV_ADD,
         NETWORK: is_dev ? process.env.TEST_NET : process.env.MAIN_NET,
-        SEED: process.env.SEED
+        SEED: process.env.SEED,
+        USDC_TOKEN: process.env.USDC_TOKEN
     }
 };
